@@ -1,0 +1,42 @@
+version: '2'
+
+services:
+
+  traefik:
+    image: traefik
+    restart: unless-stopped
+    command: -c /dev/null --web --docker --logLevel=DEBUG
+    # command: -c /dev/null --web --docker --logLevel=INFO
+    # command: --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
+    networks:
+      - proxy
+    ports:
+      - '80:80'
+      - '81:8080'
+      # - '443:443'
+    volumes:
+      - "./acme:/etc/traefik/acme"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - "traefik.frontend.rule=Host:traefik.loc"
+      - "traefik.port=8080"
+      - "traefik.backend=traefik"
+
+  portainer:
+    image: portainer/portainer
+    restart: unless-stopped
+    command: --no-auth
+    ports:
+      - '82:9000'
+    networks:
+      - proxy
+    labels:
+      - "traefik.frontend.rule=Host:portainer.loc"
+      - "traefik.port=9000"
+      - "traefik.backend=portainer"
+    volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock"
+
+networks:
+  proxy:
+    driver: bridge
